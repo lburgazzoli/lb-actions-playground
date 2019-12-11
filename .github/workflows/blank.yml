@@ -18,7 +18,11 @@ jobs:
       - name: Set Up Java
         uses: actions/setup-java@v1
         with:
-          java-version: .18
+          java-version: 1.8
+      - name: Set Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.13.x
       - name: Setup OpenShift
         uses: manusa/actions-setup-openshift@v1.0.0
         with:
@@ -27,10 +31,6 @@ jobs:
         run: |
           oc cluster status
           oc describe nodes
-      - name: Set Up Java
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
       - name: Run IT
         run: |
           echo "Adding maven artifacts to the image context"
@@ -51,4 +51,3 @@ jobs:
 
           # Then run integration tests
           make test-integration
-

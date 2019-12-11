@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
         with:
-          repository: https://github.com/apache/camel-k
+          repository: apache/camel-k
       - name: Set Up Java
         uses: actions/setup-java@v1
         with:

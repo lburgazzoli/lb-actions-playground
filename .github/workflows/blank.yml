@@ -1,22 +1,53 @@
-name: OpenShift
+name: Run Integration Tests
 
 on:
-  pull_request:
-    branches:
-      - master
+  issue_comment:
+    types: [created, edited]
 
 jobs:
-  example:
-    name: OpenShift Cluster
+  it:
+    name: IT
     runs-on: ubuntu-latest
+    if: github.event.comment.body == 'ok to test'
     steps:
       - name: Checkout
         uses: actions/checkout@v1
+        with:
+          repository: https://github.com/apache/camel-k
+      - name: Set Up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: .18
       - name: Setup OpenShift
         uses: manusa/actions-setup-openshift@v1.0.0
         with:
           oc version: 'v3.11.0'
-      - name: Interact with the cluster
-        run: oc cluster status
+      - name: Get OpenShift info
+        run: |
+          oc cluster status
+          oc describe nodes
+      - name: Set Up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Run IT
+        run: |
+          echo "Adding maven artifacts to the image context"
+          make PACKAGE_ARTIFACTS_STRATEGY=download package-artifacts
 
+          echo "Copying binary file to docker dir"
+          mkdir -p ./build/_output/bin
+          cp ./kamel ./build/_output/bin/
+
+          echo "Building the images"
+          export IMAGE=docker.io/apache/camel-k:$(make version)
+          docker build -t "${IMAGE}" -f build/Dockerfile .
+
+          echo "installing camel k cluster resources"
+          ./kamel install --cluster-setup
+
+          oc login -u developer
+
+          # Then run integration tests
+          make test-integration
 

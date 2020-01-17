@@ -1,56 +1,34 @@
 name: Run Integration Tests
 
 on:
-  issue_comment:
-    types: [created, edited]
+  pull_request:
+    branches:
+      - master
 
 jobs:
-  it:
-    name: IT
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    if: github.event.comment.body == 'ok to test'
     steps:
       - name: Checkout
         uses: actions/checkout@v1
         with:
-          repository: apache/camel-k
+          repository: apache/camel-quarkus
           ref: master
-      - name: Info
-        run: |
-          ls -lart
       - name: Set Up Java
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
-      - name: Set Go
-        uses: actions/setup-go@v1
-        with:
-          go-version: 1.13.x
-      - name: Setup OpenShift
-        uses: manusa/actions-setup-openshift@v1.0.0
-        with:
-          oc version: 'v3.11.0'
-      - name: Get OpenShift info
-        run: |
-          oc cluster status
-          oc describe nodes
-      - name: Run IT
-        run: |
-          echo "Adding maven artifacts to the image context"
-          make PACKAGE_ARTIFACTS_STRATEGY=download package-artifacts
-
-          echo "Copying binary file to docker dir"
-          mkdir -p ./build/_output/bin
-          cp ./kamel ./build/_output/bin/
-
-          echo "Building the images"
-          export IMAGE=docker.io/apache/camel-k:$(make version)
-          docker build -t "${IMAGE}" -f build/Dockerfile .
-
-          echo "installing camel k cluster resources"
-          ./kamel install --cluster-setup
-
-          oc login -u developer
-
-          # Then run integration tests
-          make test-integration
+      - name: Build Project
+        env:
+          MAVEN_OPTS: -V -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+        run: ./mvnw $MAVEN_OPTS clean install
+  it1:
+    name: IT-1
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+      - name: IT
+        env:
+          MAVEN_OPTS: -V -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+        run: ./mvnw $MAVEN_OPTS clean verify -Dnative -Ddocker -pl :camel-quarkus-integration-test-core

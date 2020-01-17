@@ -1,0 +1,32 @@
+name: Run Integration Tests (FHIR)
+
+on:
+  pull_request:
+    branches:
+      - master
+
+env:
+  LANG: en_US
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: apache/camel-quarkus
+      - name: Set Up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Build Project
+        run: |
+          ./mvnw -V -B \
+            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            -Dnative \
+            -Ddocker \
+            -pl :camel-quarkus-integration-test-fhir \
+            -am \
+            clean install

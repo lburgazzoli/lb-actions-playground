@@ -24,37 +24,13 @@ jobs:
         run: |
           ./mvnw -V -B \
             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            -DskipTests \
             clean install
-      - name: Save Cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: maven-${{ github.sha }}
-          restore-keys: |
-            maven-${{ github.sha }}
-  fhir:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          repository: apache/camel-quarkus
-      - name: Set Up Java
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.8
-      - name: Restore Cache
-        uses: actions/cache@v1
-        with:
-          path: ~/.m2/repository
-          key: maven-${{ github.sha }}
-          restore-keys: |
-            maven-${{ github.sha }}
-      - name: Build Project
+      - name: Build FHIR
         run: |
           ./mvnw -V -B \
             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            -DskipTests \
             -Dnative \
             -Ddocker \
             -Dnative-image.xmx=6G \

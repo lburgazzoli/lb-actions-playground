@@ -10,7 +10,6 @@ env:
 
 jobs:
   build:
-    name: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,8 +24,38 @@ jobs:
         run: |
           ./mvnw -V -B \
             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+            clean install
+      - name: Save Cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ github.sha }}
+          restore-keys: |
+            maven-${{ github.sha }}
+  fhir:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          repository: apache/camel-quarkus
+      - name: Set Up Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.8
+      - name: Restore Cache
+        uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository
+          key: maven-${{ github.sha }}
+          restore-keys: |
+            maven-${{ github.sha }}
+      - name: Build Project
+        run: |
+          ./mvnw -V -B \
+            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
             -Dnative \
             -Ddocker \
             -pl :camel-quarkus-integration-test-fhir \
-            -am \
             clean install

@@ -1,4 +1,4 @@
-name: Run Integration Tests (FHIR)
+name: Run Integration Tests With Options
 
 on:
   pull_request:
@@ -12,6 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set BRANCH_OPTIONS
+        if: endsWith(github.ref, '/pr1')
+        run: |
+          echo '::set-env name=BRANCH_OPTIONS::"-Dquarkus.version=999-SNAPSHOT -Poss-snapshots"'
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -22,17 +26,7 @@ jobs:
           java-version: 1.8
       - name: Build Project
         run: |
-          ./mvnw -V -B \
+          ./mvnw ${BRANCH_OPTIONS} -V -B \
             -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
             -DskipTests \
-            clean install
-      - name: Build FHIR
-        run: |
-          ./mvnw -V -B \
-            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
-            -DskipTests \
-            -Dnative \
-            -Ddocker \
-            -Dnative-image.xmx=6G \
-            -pl :camel-quarkus-integration-test-fhir \
             clean install

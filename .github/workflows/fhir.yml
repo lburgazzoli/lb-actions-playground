@@ -16,6 +16,11 @@ jobs:
         if: endsWith(github.ref, '/pr1')
         run: |
           echo '::set-env name=BRANCH_OPTIONS::"-Dquarkus.version=999-SNAPSHOT -Poss-snapshots"'
+      - name: Echo
+        run: |
+          echo ${BRANCH_OPTIONS}
+          echo ${GITHUB_REF}
+          echo ${GITHUB_BASE_REF}
       - name: Checkout
         uses: actions/checkout@v2
         with:

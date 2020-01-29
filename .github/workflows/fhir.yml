@@ -19,7 +19,6 @@ jobs:
       - name: Echo
         run: |
           echo ${BRANCH_OPTIONS}
-          echo ${GITHUB_REF}
           echo ${GITHUB_BASE_REF}
       - name: Checkout
         uses: actions/checkout@v2

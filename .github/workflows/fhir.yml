@@ -30,7 +30,6 @@ jobs:
           java-version: 1.8
       - name: Build Project
         run: |
-          ./mvnw ${BRANCH_OPTIONS} -V -B \
-            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn \
+          ./mvnw ${BRANCH_OPTIONS} -V \
             -DskipTests \
             clean install

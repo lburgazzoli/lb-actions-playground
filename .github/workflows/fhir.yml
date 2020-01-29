@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set BRANCH_OPTIONS
-        if: github.base_ref == "master"
+        if: github.base_ref == master
         run: |
           echo '::set-env name=BRANCH_OPTIONS::"-Dquarkus.version=999-SNAPSHOT -Poss-snapshots"'
       - name: Echo

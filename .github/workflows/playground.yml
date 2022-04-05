@@ -43,8 +43,8 @@ jobs:
 
           cat ${OVERLAY_PATH}/kustomization.yaml
 
-          git config user.email "mas-connectors@redhat.com" 
-          git config user.name "mas-connectors"
+          git config user.email lburgazzoli@gmail.com
+          git config user.name lburgazzoli
 
           git checkout -b ${BRANCH_NAME}
           git add ${OVERLAY_PATH}

@@ -17,7 +17,7 @@ jobs:
       - name: "Checkout cos-manifests project"
         uses: actions/checkout@v2
         with:
-          repository: bf2fc6cc711aee1a0c2a/cos-manifests
+          repository: lburgazzoli/bf2-cos-manifests
       - name: "Update Kustomize overlay ${{ matrix.overlay }}"
         uses: mikefarah/yq@master
         env:

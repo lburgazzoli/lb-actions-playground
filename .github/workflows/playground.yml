@@ -15,17 +15,13 @@ jobs:
           - "dev"
     steps:
       - name: "Install Software"
-        uses: actions/checkout@v2
-        with:
-          cmd: |
-            sudo apt-get -y install skopeo jq yq
+        run: |
+          sudo apt-get -y install skopeo jq yq
       - name: "Check Software"
-        uses: actions/checkout@v2
-        with:
-          cmd: |
-            docker version
-            jq -V
-            yq -V
+        run: |
+          docker version
+          jq -V
+          yq -V
       - name: "Checkout cos-manifests project"
         uses: actions/checkout@v2
         with:
@@ -34,15 +30,14 @@ jobs:
         env:
           OVERLAY_PATH: kustomize/overlays/${{ matrix.overlay }}/data-plane
           DEPLOY_TAG: '0.1.29'
-        with:
-          cmd: |
-            export SHA256_SYNC=$(skopeo inspect docker://quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} --format "{{.Digest}}")
-            export SHA256_CAMEL=$(skopeo inspect docker://quay.io/rhoas/cos-connector-cassandra:${DEPLOY_TAG} --format "{{.Digest}}")
-            export SHA256_DEBEZIUM=$(skopeo inspect docker://quay.io/rhoas/cos-connector-elasticsearch:${DEPLOY_TAG} --format "{{.Digest}}")
+        run: |
+          export SHA256_SYNC=$(skopeo inspect docker://quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} --format "{{.Digest}}")
+          export SHA256_CAMEL=$(skopeo inspect docker://quay.io/rhoas/cos-connector-cassandra:${DEPLOY_TAG} --format "{{.Digest}}")
+          export SHA256_DEBEZIUM=$(skopeo inspect docker://quay.io/rhoas/cos-connector-elasticsearch:${DEPLOY_TAG} --format "{{.Digest}}")
 
-            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-sync").digest = strenv(SHA256_SYNC)' ${OVERLAY_PATH}/kustomization.yaml
-            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-camel").digest = strenv(SHA256_CAMEL)' ${OVERLAY_PATH}/kustomization.yaml
-            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-debezium").digest = strenv(SHA256_DEBEZIUM)' ${OVERLAY_PATH}/kustomization.yaml
+          yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-sync").digest = strenv(SHA256_SYNC)' ${OVERLAY_PATH}/kustomization.yaml
+          yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-camel").digest = strenv(SHA256_CAMEL)' ${OVERLAY_PATH}/kustomization.yaml
+          yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-debezium").digest = strenv(SHA256_DEBEZIUM)' ${OVERLAY_PATH}/kustomization.yaml
 
       - name: "Show"
         env:

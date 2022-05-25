@@ -8,58 +8,44 @@ on:
 
 jobs:
   kustomize:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         overlay:
           - "dev"
     steps:
+      - name: "Install Software"
+        uses: actions/checkout@v2
+        with:
+          cmd: |
+            sudo apt-get -y install skopeo jq yq
+      - name: "Check Software"
+        uses: actions/checkout@v2
+        with:
+          cmd: |
+            docker version
+            jq -V
+            yq -V
       - name: "Checkout cos-manifests project"
         uses: actions/checkout@v2
         with:
           repository: bf2fc6cc711aee1a0c2a/cos-manifests
       - name: "Update Kustomize overlay ${{ matrix.overlay }}"
-        uses: mikefarah/yq@master
         env:
-          OVERLAY_PATH: kustomize/overlays/${{ matrix.overlay }}
-          NEW_TAG: main-${{ github.sha }}
+          OVERLAY_PATH: kustomize/overlays/${{ matrix.overlay }}/data-plane
+          DEPLOY_TAG: '0.1.29'
         with:
           cmd: |
-            yq -i ".images[0].newTag = env(NEW_TAG)" ${OVERLAY_PATH}/kustomization.yaml
-            yq -i ".images[1].newTag = env(NEW_TAG)" ${OVERLAY_PATH}/kustomization.yaml
-            yq -i ".images[2].newTag = env(NEW_TAG)" ${OVERLAY_PATH}/kustomization.yaml
+            export SHA256_SYNC=$(skopeo inspect docker://quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} --format "{{.Digest}}")
+            export SHA256_CAMEL=$(skopeo inspect docker://quay.io/rhoas/cos-connector-cassandra:${DEPLOY_TAG} --format "{{.Digest}}")
+            export SHA256_DEBEZIUM=$(skopeo inspect docker://quay.io/rhoas/cos-connector-elasticsearch:${DEPLOY_TAG} --format "{{.Digest}}")
 
-      - name: "Create PR for ${{ matrix.overlay }}"
+            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-sync").digest = strenv(SHA256_SYNC)' ${OVERLAY_PATH}/kustomization.yaml
+            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-camel").digest = strenv(SHA256_CAMEL)' ${OVERLAY_PATH}/kustomization.yaml
+            yq -i '.images[] |= select(.name == "quay.io/rhoas/cos-fleetshard-operator-debezium").digest = strenv(SHA256_DEBEZIUM)' ${OVERLAY_PATH}/kustomization.yaml
+
+      - name: "Show"
         env:
           OVERLAY_PATH: kustomize/overlays/${{ matrix.overlay }}
-          BRANCH_NAME: "overlay.${{ matrix.overlay }}.${{ github.sha }}"
-          NEW_TAG: main-${{ github.sha }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          echo ""
-          echo "tag     : $NEW_TAG"
-          echo "branch  : $BRANCH_NAME"
-          echo ""
-
           cat ${OVERLAY_PATH}/kustomization.yaml
-
-          git config user.email "mas-connectors@redhat.com" 
-          git config user.name "mas-connectors"
-
-          git checkout -b ${BRANCH_NAME}
-          git add ${OVERLAY_PATH}
-          git commit -m "Update kustomization images for overlay ${{ matrix.overlay }}" ${OVERLAY_PATH}
-          git reset --hard
-          git push -u origin ${BRANCH_NAME}
-
-          # GH CLI can't find the branch on remote... needs some time :)
-          sleep 15
-
-          gh config set prompt disabled
-
-          gh pr create \
-            --fill \
-            --draft \
-            --base main \
-            --title "chore(kustomize): update kustomization images overlay ${{ matrix.overlay }}" \
-            --body "sha ${{ github.sha }}, overlay ${{ matrix.overlay }}, tag: ${NEW_TAG}"

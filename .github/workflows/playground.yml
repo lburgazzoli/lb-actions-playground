@@ -12,5 +12,6 @@ jobs:
     steps:
       - name: "Skopeo"
         run: |    
+          export XDG_RUNTIME_DIR=$HOME/.config
           skopeo --version
           skopeo inspect docker://busybox:latest

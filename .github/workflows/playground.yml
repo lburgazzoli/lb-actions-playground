@@ -13,4 +13,4 @@ jobs:
       - name: "Skopeo"
         run: |    
           skopeo --version
-          skopeo inspect --no-creds docker://busybox:latest
+          skopeo inspect docker://busybox:latest

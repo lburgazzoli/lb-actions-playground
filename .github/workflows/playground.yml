@@ -14,12 +14,6 @@ jobs:
         overlay:
           - "dev"
     steps:
-      - name: "Check Software"
-        run: |
-          docker version
-          skopeo --version
-          jq -V
-          yq -V
       - name: "Checkout cos-manifests project"
         uses: actions/checkout@v2
         with:
@@ -29,7 +23,7 @@ jobs:
           OVERLAY_PATH: kustomize/overlays/${{ matrix.overlay }}/data-plane
           DEPLOY_TAG: '0.1.29'
         run: |
-          skopeo inspect docker://quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} 
+          docker manifest inspect quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} | jq -r '.config.digest'
           
           #export SHA256_SYNC=$(skopeo inspect docker://quay.io/rhoas/cos-connector-mongodb:${DEPLOY_TAG} --format "{{.Digest}}")
           #export SHA256_CAMEL=$(skopeo inspect docker://quay.io/rhoas/cos-connector-cassandra:${DEPLOY_TAG} --format "{{.Digest}}")

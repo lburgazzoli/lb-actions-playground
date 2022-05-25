@@ -17,7 +17,7 @@ jobs:
       - name: "Install Software"
         run: |
           sudo apt-get -y install skopeo jq
-          snap install yq
+          sudo snap install yq
       - name: "Check Software"
         run: |
           docker version
